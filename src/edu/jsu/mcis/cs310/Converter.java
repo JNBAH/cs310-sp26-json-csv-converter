@@ -78,8 +78,59 @@ public class Converter {
         
         try {
         
-            // INSERT YOUR CODE HERE
+            // INSERT YOUR CODE HERE    CSV is Strings
+            // Create a csv reader to read in the strings converted in another file
+            CSVReader reader = new CSVReader(new java.io.StringReader(csvString));
             
+            //Read all the rows at once
+            java.util.List<String[]> allRows = reader.readAll();
+            
+            //
+            if (allRows.size() < 1) return result; 
+            
+            //Define JSON tabs
+            JSONObject json = new JSONObject();
+            JSONArray productNums = new JSONArray();
+            JSONArray columnHeadings = new JSONArray();
+            JSONArray data = new JSONArray();
+            
+            //Setting Header row
+            String[] headers = allRows.get(0);
+            for (String h : headers) 
+                columnHeadings.add(h);
+            
+            
+            // Get each data row
+            for (int i = 1; i < allRows.size(); i++){
+                String[] row = allRows.get(i);
+                
+            // The first column is the product numbers 
+                productNums.add(row[0]);
+                
+            // The rest of the data goes into data
+                JSONArray rowData = new JsonArray();
+                for (int j = 1; j < row.length; j++){
+                    String value = row[j];
+                
+                //Convert strings into integers
+                if (headers[j].equals("Season")|| headers[j].equals("Episode")){
+                    try{
+                        rowData.add(Integer.parseInt(value));
+                    }
+                    catch(NumberFormatException e){
+                        rowData.add(value);
+                    }
+                }
+                else{
+                    rowData.add(value);
+                }
+                }
+                
+                 data.add(rowData);
+            }
+           json.put("ProdNums",productNums);
+           json.put("ColHeadings", columnHeadings);
+           json.put("Data", data);
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -96,7 +147,7 @@ public class Converter {
         
         try {
             
-            // INSERT YOUR CODE HERE
+            // INSERT YOUR CODE HERE JSON is data/variables
             
         }
         catch (Exception e) {
