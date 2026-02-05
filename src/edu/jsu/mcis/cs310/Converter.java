@@ -70,7 +70,7 @@ public class Converter {
         Exchange" lecture notes for more details, including examples.
         
     */
-    
+   
     @SuppressWarnings("unchecked")
     public static String csvToJson(String csvString) {
         
@@ -86,13 +86,14 @@ public class Converter {
             java.util.List<String[]> allRows = reader.readAll();
             
             //
-            if (allRows.size() < 1) return result; 
+            if (allRows.size() < 1) 
+                return result; 
             
             //Define JSON tabs
-            JSONObject json = new JSONObject();
-            JSONArray productNums = new JSONArray();
-            JSONArray columnHeadings = new JSONArray();
-            JSONArray data = new JSONArray();
+            JsonObject json = new JsonObject();
+            JsonArray productNums = new JsonArray();
+            JsonArray columnHeadings = new JsonArray();
+            JsonArray data = new JsonArray();
             
             //Setting Header row
             String[] headers = allRows.get(0);
@@ -108,7 +109,7 @@ public class Converter {
                 productNums.add(row[0]);
                 
             // The rest of the data goes into data
-                JSONArray rowData = new JsonArray();
+                JsonArray rowData = new JsonArray();
                 for (int j = 1; j < row.length; j++){
                     String value = row[j];
                 
@@ -128,7 +129,7 @@ public class Converter {
                 
                  data.add(rowData);
             }
-           json.put("ProdNums",productNums);
+           json.put("prodNums",productNums);
            json.put("ColHeadings", columnHeadings);
            json.put("Data", data);
         }
@@ -148,6 +149,61 @@ public class Converter {
         try {
             
             // INSERT YOUR CODE HERE JSON is data/variables
+            
+            JsonObject json = (JsonObject) Jsoner.deserialize(jsonString);
+            
+            //get the main parts
+            JsonArray productNums = (JsonArray) json.get("prodNums");
+            JsonArray columnHeadings = (JsonArray) json.get("ColHeadings");
+            JsonArray data = (JsonArray) json.get("data");
+            
+            //Write CSV to string with StringWriter
+            java.io.StringWriter stringwriter = new java.io.StringWriter();
+            CSVWriter writer = new CSVWriter(stringwriter);
+            
+            //Begin with Header row
+            String[] header = new String[columnHeadings.size()];
+            for (int i = 0; i < columnHeadings.size(); i++){
+                header[i] = (String) columnHeadings.get(i);
+            }
+            writer.writeNext(header);
+            
+            //Write data rows
+            for (int i = 0; i < productNums.size(); i++){
+                String prodNums = (String) productNums.get(i);
+                JsonArray rowData = (JsonArray) data.get(i);
+                
+                String[] row = new String[header.length];
+                row[0] = prodNums;
+                
+                //Finish Data
+                int colIndex = 1;
+                
+                for (Object value : rowData){
+                    if (header[colIndex].equals("Season") || header[colIndex].equals("Episode")){
+                        int intValue = 0;
+                        if (value instanceof Long) intValue = ((Long) value).intValue();
+                        
+                        if(header[colIndex].equals("Episode")&& intValue < 10){
+                            row[colIndex] = "0" + intValue;
+                        }
+                        else{
+                            row[colIndex] = String.valueOf(intValue);
+                        }
+                        
+                    }
+                    
+                    else{
+                        row[colIndex] = value.toString();
+                    }
+                    colIndex++;
+                }
+                writer.writeNext(row);
+                
+                
+           
+            }
+        
             
         }
         catch (Exception e) {
