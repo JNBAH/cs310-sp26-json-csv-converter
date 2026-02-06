@@ -74,7 +74,7 @@ public class Converter {
     @SuppressWarnings("unchecked")
     public static String csvToJson(String csvString) {
         
-        String result = "{}"; // default return value; replace later!
+        String result; // default return value; replace later!
         
         try {
         
@@ -84,54 +84,43 @@ public class Converter {
             
             //Read all the rows at once
             java.util.List<String[]> allRows = reader.readAll();
+            //add all data to iterator so that it can be transferred
+            java.util.Iterator<String[]> iterator = allRows.iterator();
             
-            //
+            //Safety
             if (allRows.size() < 1) 
                 return result; 
             
+            
             //Define JSON tabs
-            JsonObject json = new JsonObject();
-            JsonArray productNums = new JsonArray();
+            //JsonObject json = new JsonObject();
+            //JsonArray productNums = new JsonArray();
             JsonArray columnHeadings = new JsonArray();
             JsonArray data = new JsonArray();
             
-            //Setting Header row
+            //Setting Header row by using the true first element which is index 0
             String[] headers = allRows.get(0);
             for (String h : headers) 
                 columnHeadings.add(h);
             
+            //using iterator to proccess individaul data
             
-            // Get each data row
-            for (int i = 1; i < allRows.size(); i++){
-                String[] row = allRows.get(i);
-                
-            // The first column is the product numbers 
-                productNums.add(row[0]);
-                
-            // The rest of the data goes into data
-                JsonArray rowData = new JsonArray();
-                for (int j = 1; j < row.length; j++){
-                    String value = row[j];
-                
-                //Convert strings into integers
-                if (headers[j].equals("Season")|| headers[j].equals("Episode")){
-                    try{
-                        rowData.add(Integer.parseInt(value));
+            if (iterator.hasNext()){
+                String[] headings = iterator.next();
+                while (iterator.hasNext()){
+                    String[]csvRecord = iterator.next();
+                    java.util.LinkedHashMap<String, String> jsonRecord = new java.util.LinkedHashMap<>();
+                    for (int i = 0; i < headings.length; ++i){
+                        jsonRecord.put(headings[i].toLowerCase(), csvRecord[i]);
                     }
-                    catch(NumberFormatException e){
-                        rowData.add(value);
-                    }
-                }
-                else{
-                    rowData.add(value);
-                }
+                    data.add(jsonRecord);
+                    result = Jsoner.serialize(data);
                 }
                 
-                 data.add(rowData);
             }
-           json.put("prodNums",productNums);
-           json.put("ColHeadings", columnHeadings);
-           json.put("Data", data);
+            
+            
+          
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -150,59 +139,8 @@ public class Converter {
             
             // INSERT YOUR CODE HERE JSON is data/variables
             
-            JsonObject json = (JsonObject) Jsoner.deserialize(jsonString);
             
-            //get the main parts
-            JsonArray productNums = (JsonArray) json.get("prodNums");
-            JsonArray columnHeadings = (JsonArray) json.get("ColHeadings");
-            JsonArray data = (JsonArray) json.get("data");
             
-            //Write CSV to string with StringWriter
-            java.io.StringWriter stringwriter = new java.io.StringWriter();
-            CSVWriter writer = new CSVWriter(stringwriter);
-            
-            //Begin with Header row
-            String[] header = new String[columnHeadings.size()];
-            for (int i = 0; i < columnHeadings.size(); i++){
-                header[i] = (String) columnHeadings.get(i);
-            }
-            writer.writeNext(header);
-            
-            //Write data rows
-            for (int i = 0; i < productNums.size(); i++){
-                String prodNums = (String) productNums.get(i);
-                JsonArray rowData = (JsonArray) data.get(i);
-                
-                String[] row = new String[header.length];
-                row[0] = prodNums;
-                
-                //Finish Data
-                int colIndex = 1;
-                
-                for (Object value : rowData){
-                    if (header[colIndex].equals("Season") || header[colIndex].equals("Episode")){
-                        int intValue = 0;
-                        if (value instanceof Long) intValue = ((Long) value).intValue();
-                        
-                        if(header[colIndex].equals("Episode")&& intValue < 10){
-                            row[colIndex] = "0" + intValue;
-                        }
-                        else{
-                            row[colIndex] = String.valueOf(intValue);
-                        }
-                        
-                    }
-                    
-                    else{
-                        row[colIndex] = value.toString();
-                    }
-                    colIndex++;
-                }
-                writer.writeNext(row);
-                
-                
-           
-            }
         
             
         }
