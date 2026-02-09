@@ -93,8 +93,8 @@ public class Converter {
             
             
             //Define JSON tabs
-            //JsonObject json = new JsonObject();
-            //JsonArray productNums = new JsonArray();
+            //JsonObject json = new JsonObject(); *omit
+            //JsonArray productNums = new JsonArray(); *omit 
             JsonArray columnHeadings = new JsonArray();
             JsonArray data = new JsonArray();
             
@@ -133,11 +133,49 @@ public class Converter {
     @SuppressWarnings("unchecked")
     public static String jsonToCsv(String jsonString) {
         
-        String result = ""; // default return value; replace later!
+        String result; // default return value; replace later!
         
         try {
             
             // INSERT YOUR CODE HERE JSON is data/variables
+           
+            //desserialize data into an array     already done in another file
+            JsonObject root = (JsonObject) Jsoner.deserialize(jsonString);
+           
+            JsonArray prodNums = (JsonArray)root.get("ProdNums");
+            JsonArray colHeadings = (JsonArray) root.get("ColHeadings");
+            JsonArray data = (JsonArray) root.get("Data");
+            
+            java.io.StringWriter writer = new java.io.StringWriter();
+            CSVWriter csvWriter = new CSVWriter(writer);
+            
+            //header row
+            
+            String[] headers = new String[colHeadings.size()];
+            for (int i = 0; i < colHeadings.size(); i++){
+                headers[i] = colHeadings.get(i).toString();
+            }
+            
+            csvWriter.writeNext(headers);
+            
+            //data rows
+            
+            for (int i = 0; i < data.size(); i++){
+                JsonArray row = (JsonArray) data.get(i);
+                String[] csvRow = new String[row.size() + 1];
+                
+                csvRow[0] = prodNums.get(i).toString();
+                
+                for (int j = 0; j < row.size(); j++){
+                    csvRow[j+1] = row.get(j).toString();
+                }
+                
+                csvWriter.writeNext(csvRow);
+            }
+            
+            csvWriter.close();
+            
+            result = writer.toString();
             
             
             
